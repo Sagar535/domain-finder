@@ -1,52 +1,97 @@
 import Head from 'next/head';
 import styles from '../styles/Home.module.css';
+import { useEffect, useState } from 'react';
 
 export default function Home() {
+  const [domainstring, setDomainString] = useState('')
+  const [results, setResults] = useState([])
+  const api_token = process.env.NEXT_PUBLIC_API_NINJA_TOKEN
+  const api_url = "https://api.api-ninjas.com/v1/whois?domain="
+
+  const getResult = async (domain) => {
+    const result = await fetch(api_url + domain, {
+      method: "GET",
+      headers:  {
+        "X-Api-Key": api_token
+      },
+      referrerPolicy: 'no-referrer',
+    })
+    const data = await result.json()
+    setResults(results => (
+      [...results, empty_object(data) ? {available: true, domain: domain} : {available: false, domain: domain}]
+    ))
+    return result
+  }
+
+  const findDomains = () => {
+    setResults([])
+    const domains = domainstring.split(/\s+/)
+    domains.forEach(domain => {
+      // make request to api and get the results
+      getResult(domain)
+    });
+  }
+
+  const empty_object = (object) => (JSON.stringify(object) === "{}")
+
   return (
     <div className={styles.container}>
       <Head>
-        <title>Create Next App</title>
+        <title>Who Is and Who Is Not</title>
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
       <main>
         <h1 className={styles.title}>
-          Welcome to <a href="https://nextjs.org">Next.js!</a>
+          Welcome
         </h1>
 
         <p className={styles.description}>
-          Get started by editing <code>pages/index.js</code>
+          Please insert the domain name or names that you want to check
+        </p>
+        <p className={styles.description}>
+          <code>
+            Make sure the names end with the proper extensions like .com, .net etc. and separated by a whitespace
+          </code>
         </p>
 
         <div className={styles.grid}>
-          <a href="https://nextjs.org/docs" className={styles.card}>
-            <h3>Documentation &rarr;</h3>
-            <p>Find in-depth information about Next.js features and API.</p>
-          </a>
+          <textarea
+            placeholder='Enter the list here'
+            className={styles.textarea}
+            onChange={(e) => setDomainString(e.target.value)}
+            />
 
-          <a href="https://nextjs.org/learn" className={styles.card}>
-            <h3>Learn &rarr;</h3>
-            <p>Learn about Next.js in an interactive course with quizzes!</p>
-          </a>
+        <div style={{marginLeft: "20px", marginBottom: "auto"}}>
+          {
+            results.length > 0 && (
+              <>
+                <table border="1">
+                  <thead>
+                    <th>Domain</th>
+                    <th>Availability</th>
+                  </thead>
 
-          <a
-            href="https://github.com/vercel/next.js/tree/canary/examples"
-            className={styles.card}
-          >
-            <h3>Examples &rarr;</h3>
-            <p>Discover and deploy boilerplate example Next.js projects.</p>
-          </a>
-
-          <a
-            href="https://vercel.com/import?filter=next.js&utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-            className={styles.card}
-          >
-            <h3>Deploy &rarr;</h3>
-            <p>
-              Instantly deploy your Next.js site to a public URL with Vercel.
-            </p>
-          </a>
+                  <tbody>
+                    {
+                      results.map(result => (
+                        <tr>
+                          <td>{result.domain}</td>
+                          <td className={result.available ? 'green' : 'red'}>{result.available ? "Available" : "Unavailable"}</td>
+                        </tr>
+                      ))
+                    }
+                  </tbody>
+                </table>
+              </>
+            )
+          }
         </div>
+        </div>
+
+        <button className={styles.submit} onClick={findDomains}>
+          Submit
+        </button>
       </main>
 
       <footer>
@@ -101,6 +146,18 @@ export default function Home() {
             Bitstream Vera Sans Mono,
             Courier New,
             monospace;
+        }
+        td {
+          width: 200px;
+          padding: 15px;
+        }
+        .red {
+          background-color: red;
+          color: white;
+        }
+        .green {
+          background-color: green;
+          color: white;
         }
       `}</style>
 
