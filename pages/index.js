@@ -23,12 +23,17 @@ export default function Home() {
     return result
   }
 
+  const sanitize = (domain) => (
+    domain.split(".").length > 1 ? domain : domain+".com"
+  )
+
   const findDomains = () => {
     setResults([])
     const domains = domainstring.split(/\s+/)
     domains.forEach(domain => {
+      const sanitized_domain = sanitize(domain)
       // make request to api and get the results
-      getResult(domain)
+      getResult(sanitized_domain)
     });
   }
 
